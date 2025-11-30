@@ -7,7 +7,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @attribute [Authorize]
 
-<h3>Gerenciamento de GymID</h3>
+<h3>Aqui você encontra todas as integrações do Wellhub!</h3>
 
 <div class="card p-3 mb-4">
     <EditForm Model="@novoRegistro" OnValidSubmit="SalvarRegistro">
@@ -85,13 +85,10 @@
 
     private async Task SalvarRegistro()
     {
-        // Pega o usuário logado
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var usuario = authState.User.Identity?.Name ?? "Desconhecido";
 
         await Service.CriarAsync(novoRegistro, usuario);
-
-        // Limpa o formulário e recarrega
         novoRegistro = new GymManager();
         await CarregarDados();
     }
@@ -101,11 +98,10 @@
         if (Enum.TryParse<EnumStatus>(novoStatusString, out var novoStatus))
         {
             await Service.AtualizarStatusAsync(item.Id, novoStatus);
-            item.Status = novoStatus; // Atualiza visualmente
+            item.Status = novoStatus;
         }
     }
 
-    // Apenas para deixar bonito visualmente
     private string GetBadgeClass(EnumStatus status) => status switch
     {
         EnumStatus.Novo => "bg-primary",

@@ -1,0 +1,28 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: gym_sql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=SuaSenhaForte!10
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  app:
+    image: gymmanager-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gym_app
+    ports:
+      - "8080:8080" 
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db,1433;Database=GymManagerDb;User Id=sa;Password=SuaSenhaForte!10;TrustServerCertificate=True;
+
+volumes:
+  sql_data:
