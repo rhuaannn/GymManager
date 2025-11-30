@@ -1,0 +1,117 @@
+﻿@page "/registros"
+@using GymManager.Data.Gym
+
+@using GymManager.Services
+@using Microsoft.AspNetCore.Authorization
+@inject RegistroService Service
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize]
+
+<h3>Gerenciamento de GymID</h3>
+
+<div class="card p-3 mb-4">
+    <EditForm Model="@novoRegistro" OnValidSubmit="SalvarRegistro">
+        <DataAnnotationsValidator />
+
+        <div class="row">
+            <div class="col-md-4">
+                <label>ID da Academia</label>
+                <InputText @bind-Value="novoRegistro.IdAcademia" class="form-control" />
+                <ValidationMessage For="@(() => novoRegistro.IdAcademia)" />
+            </div>
+            <div class="col-md-4">
+                <label>Gym ID</label>
+                <InputText @bind-Value="novoRegistro.GymId" class="form-control" />
+                <ValidationMessage For="@(() => novoRegistro.GymId)" />
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Cadastrar</button>
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Academia ID</th>
+            <th>Gym ID</th>
+            <th>Criado Por</th>
+            <th>Status</th>
+            <th>Ação</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in listaRegistros)
+        {
+            <tr>
+                <td>@item.IdAcademia</td>
+                <td>@item.GymId</td>
+                <td>@item.CriadoPorUsuario</td>
+                <td>
+                    <span class="badge @GetBadgeClass(item.Status)">
+                        @item.Status
+                    </span>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm"
+                            @onchange="(e) => MudarStatus(item, e.Value.ToString())">
+                        @foreach (var status in Enum.GetValues(typeof(EnumStatus)))
+                        {
+                            <option value="@status" selected="@(item.Status.ToString() == status.ToString())">
+                                @status
+                            </option>
+                        }
+                    </select>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private GymManager novoRegistro = new GymManager();
+    private List<GymManager> listaRegistros = new List<GymManager>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarDados();
+    }
+
+    private async Task CarregarDados()
+    {
+        listaRegistros = await Service.ObterTodosAsync();
+    }
+
+    private async Task SalvarRegistro()
+    {
+        // Pega o usuário logado
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var usuario = authState.User.Identity?.Name ?? "Desconhecido";
+
+        await Service.CriarAsync(novoRegistro, usuario);
+
+        // Limpa o formulário e recarrega
+        novoRegistro = new GymManager();
+        await CarregarDados();
+    }
+
+    private async Task MudarStatus(GymManager item, string novoStatusString)
+    {
+        if (Enum.TryParse<EnumStatus>(novoStatusString, out var novoStatus))
+        {
+            await Service.AtualizarStatusAsync(item.Id, novoStatus);
+            item.Status = novoStatus; // Atualiza visualmente
+        }
+    }
+
+    // Apenas para deixar bonito visualmente
+    private string GetBadgeClass(EnumStatus status) => status switch
+    {
+        EnumStatus.Novo => "bg-primary",
+        EnumStatus.Progresso => "bg-warning text-dark",
+        EnumStatus.Recusado => "bg-danger",
+        EnumStatus.Concluido => "bg-success",
+        _ => "bg-secondary"
+    };
+}

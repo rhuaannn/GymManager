@@ -1,0 +1,11 @@
+# Ignorar pastas do Visual Studio
+.vs/
+.vscode/
+
+# Ignorar build results
+bin/
+obj/
+
+# Ignorar arquivos de usuário
+*.user
+*.suo
