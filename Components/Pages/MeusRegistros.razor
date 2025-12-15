@@ -78,6 +78,7 @@
                     <th>Criado Por (Email)</th>
                     <th>Status</th>
                     <th>Ações</th>
+                    <th>Editar</th>
                 </tr>
             </thead>
             <tbody>
@@ -109,6 +110,27 @@
                                 </span>
                             }
                         </td>
+                        <td>
+                            @if (registroEmEdicao == item.Id)
+                            {
+                                <button class="btn btn-sm btn-success me-1"
+                                        @onclick="() => SalvarEdicao(item)">
+                                    ✔
+                                </button>
+
+                                <button class="btn btn-sm btn-secondary"
+                                        @onclick="CancelarEdicao">
+                                    ✖
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-primary"
+                                        @onclick="() => Editar(item.Id)">
+                                    Editar
+                                </button>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -136,6 +158,7 @@
     public GymManager NovoRegistro { get; set; }
 
     private List<GymManager> listaRegistros;
+    private int? registroEmEdicao = null;
 
     private string mensagem = "";
     private string mensagemErro = ""; 
@@ -217,6 +240,34 @@
             mensagemErro = ex.Message;
         }
     }
+    private void Editar(int id)
+    {
+        registroEmEdicao = id;
+    }
+
+    private async Task CancelarEdicao()
+    {
+        registroEmEdicao = null;
+        await CarregarDados(); // desfaz alterações
+    }
+
+    private async Task SalvarEdicao(GymManager item)
+    {
+        try
+        {
+            await Service.AtualizaInfo(item.Id, item);
+
+            mensagem = "Registro atualizado com sucesso!";
+            registroEmEdicao = null;
+
+            await CarregarDados();
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = ex.Message;
+        }
+    }
+
 
     private async Task AtualizarStatus(GymManager item, string novoStatusStr)
     {
@@ -229,6 +280,12 @@
         }
     }
 
+    private async Task AtualizarInfo(int id, GymManager item)
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var usuario = authState.User.Identity?.Name ?? "Anônimo";
+        await Service.AtualizaInfo(id, item);
+    }
 
     private async Task AoDigitarPesquisa(KeyboardEventArgs e)
     {

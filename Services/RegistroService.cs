@@ -36,10 +36,18 @@ namespace GymManager.Services
         public async Task AtualizaInfo(int id, Data.Gym.GymManager registroAtualizado)
         {
             var registroExistente = await _context.Registros.FindAsync(id);
+            bool existeOutro = await _context.Registros
+                                .AnyAsync(x => x.GymId == registroAtualizado.GymId && x.Id != id);
+
+            if (existeOutro)
+                throw new Exception("Já existe um registro com esse GymId");
+
             if (registroExistente != null)
             {
-                registroExistente.IdAcademia = registroAtualizado.IdAcademia;
-                registroExistente.GymId = registroAtualizado.GymId;
+                _context.Attach(registroAtualizado);
+                _context.Entry(registroAtualizado).Property(x => x.IdAcademia).IsModified = true;
+                _context.Entry(registroAtualizado).Property(x => x.GymId).IsModified = true;
+
                 await _context.SaveChangesAsync();
             }
         }
