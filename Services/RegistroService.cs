@@ -33,7 +33,16 @@ namespace GymManager.Services
 
             return;
         }
-
+        public async Task AtualizaInfo(int id, Data.Gym.GymManager registroAtualizado)
+        {
+            var registroExistente = await _context.Registros.FindAsync(id);
+            if (registroExistente != null)
+            {
+                registroExistente.IdAcademia = registroAtualizado.IdAcademia;
+                registroExistente.GymId = registroAtualizado.GymId;
+                await _context.SaveChangesAsync();
+            }
+        }
         public async Task AtualizarStatusAsync(int id, EnumStatus novoStatus)
         {
             var item = await _context.Registros.FindAsync(id);
